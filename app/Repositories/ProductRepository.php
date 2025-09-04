@@ -2,13 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Model\Product;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProductRepository
 {
     protected $model;
-    protected function __construct(Product $product)
+    public function __construct(Product $product)
     {
         $this->model = $product;
     }
