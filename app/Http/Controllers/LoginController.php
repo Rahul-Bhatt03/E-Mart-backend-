@@ -50,6 +50,7 @@ protected $authService;
                     'phone_number' => $result['user']->phone_number,
                     'role' => $result['user']->role,
                 ],
+                'token'=>$result['access_token'],
                 'redirect' => $result['redirect'],
                 'message' => 'Login successful'
             ], Response::HTTP_OK)
