@@ -5,6 +5,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -61,4 +62,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'adminShow']);
         Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     });
+
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/payment/create-intent', [PaymentController::class, 'createPaymentIntent']);
+    Route::get('/payment/status/{paymentIntentId}', [PaymentController::class, 'getPaymentStatus']);
+    Route::post('/payment/confirm-order', [PaymentController::class, 'confirmOrder']);
+    Route::get('/payment/public-key', [PaymentController::class, 'getPublicKey']);
+});
+Route::post('/webhook/stripe', [PaymentController::class, 'webhook']);
 });

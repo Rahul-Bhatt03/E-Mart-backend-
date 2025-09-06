@@ -44,7 +44,7 @@ class OrderController extends Controller
         }
     }
 
-    public function store(Request $request)
+  public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'shipping_address' => 'required|array',
@@ -53,6 +53,8 @@ class OrderController extends Controller
             'shipping_address.state' => 'required|string',
             'shipping_address.postal_code' => 'required|string',
             'shipping_address.country' => 'required|string',
+            'tax_rate' => 'nullable|numeric|min:0|max:1',
+            'shipping_amount' => 'nullable|numeric|min:0',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -60,11 +62,13 @@ class OrderController extends Controller
         try {
             $order = $this->orderService->createOrderFromCart(
                 $request->user()->id,
-                $request->shipping_address
+                $request->shipping_address,
+                $request->tax_rate ?? 0.1,
+                $request->shipping_amount ?? 0
             );
             return response()->json([
                 'order' => $order,
-                'message' => 'order created successfully'
+                'message' => 'order created successfully - proceed to payment'
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
