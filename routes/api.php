@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\OrderController;
@@ -64,10 +65,25 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/payment/create-intent', [PaymentController::class, 'createPaymentIntent']);
-    Route::get('/payment/status/{paymentIntentId}', [PaymentController::class, 'getPaymentStatus']);
-    Route::post('/payment/confirm-order', [PaymentController::class, 'confirmOrder']);
-    Route::get('/payment/public-key', [PaymentController::class, 'getPublicKey']);
-});
-Route::post('/webhook/stripe', [PaymentController::class, 'webhook']);
+        Route::post('/payment/create-intent', [PaymentController::class, 'createPaymentIntent']);
+        Route::get('/payment/status/{paymentIntentId}', [PaymentController::class, 'getPaymentStatus']);
+        Route::post('/payment/confirm-order', [PaymentController::class, 'confirmOrder']);
+        Route::get('/payment/public-key', [PaymentController::class, 'getPublicKey']);
+    });
+    Route::post('/webhook/stripe', [PaymentController::class, 'webhook']);
+
+    // Image upload routes (consider adding middleware for authentication)
+    Route::prefix('images')->group(function () {
+        Route::post('/upload', [ImageUploadController::class, 'uploadSingle']);
+        Route::post('/upload-multiple', [ImageUploadController::class, 'uploadMultiple']);
+        Route::delete('/delete', [ImageUploadController::class, 'deleteImage']);
+        Route::delete('/delete-multiple', [ImageUploadController::class, 'deleteMultiple']);
+    });
+
+    // Admin routes (add your authentication middleware)
+    Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
+
+        Route::apiResource('products', ProductController::class)->except(['index', 'show']);
+        Route::delete('/products/{productId}/images/{imagePublicId}', [ProductController::class, 'deleteImage']);
+    });
 });

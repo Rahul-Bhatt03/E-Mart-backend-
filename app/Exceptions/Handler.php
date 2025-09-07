@@ -57,4 +57,17 @@ class Handler extends ExceptionHandler
             'message' => 'Unauthenticated.'
         ], 401);
     }
+
+    public function render($request, Throwable $exception)
+{
+    if ($request->expectsJson()) {
+        return response()->json([
+            'message' => $exception->getMessage(),
+            'trace'   => config('app.debug') ? $exception->getTrace() : []
+        ], 500);
+    }
+
+    return parent::render($request, $exception);
+}
+
 }

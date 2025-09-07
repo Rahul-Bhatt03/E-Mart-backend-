@@ -37,6 +37,7 @@ class PaymentController extends Controller
                 'message' => 'Payment intent created successfully'
             ]);
         } catch (\Exception $e) {
+            Log::error('Payment intent creation error: ' . $e->getMessage());
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST);
@@ -58,6 +59,7 @@ class PaymentController extends Controller
                 'payment_intent' => $paymentIntent
             ]);
         } catch (\Exception $e) {
+            Log::error('Payment status error: ' . $e->getMessage());
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST);
@@ -81,6 +83,7 @@ class PaymentController extends Controller
                 'message' => 'Order confirmed successfully'
             ]);
         } catch (\Exception $e) {
+            Log::error('Order confirmation error: ' . $e->getMessage());
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST);

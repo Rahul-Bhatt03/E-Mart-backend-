@@ -77,10 +77,14 @@ class OrderService
         $taxAmount = $subtotalAmount * $taxRate;
         $totalAmount = $subtotalAmount + $taxAmount + $shippingAmount;
 
+        // Generate order number
+        $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(uniqid());
+
         // Create order with payment status as pending
         $orderData = [
             'user_id' => $userId,
-            'total_amount' => $subtotalAmount,
+            'order_number' => $orderNumber,
+            'total_amount' => $totalAmount, // This is the final total
             'tax_amount' => $taxAmount,
             'shipping_amount' => $shippingAmount,
             'status' => 'pending',
@@ -108,7 +112,12 @@ class OrderService
             throw new \Exception('Order payment already processed');
         }
 
-        return $this->paymentService->createPaymentIntent($order);
+        $paymentIntent = $this->paymentService->createPaymentIntent($order);
+        
+        // Update order with payment intent ID
+        $this->orderRepository->updatePaymentStatus($orderId, 'processing', $paymentIntent->id);
+
+        return $paymentIntent;
     }
 
     /**
@@ -122,8 +131,12 @@ class OrderService
             throw new \Exception('Order not found');
         }
 
-        if (!$order->isPaymentSucceeded()) {
-            throw new \Exception('Payment not completed for this order');
+        // Verify payment was successful
+        if ($order->stripe_payment_intent_id) {
+            $paymentIntent = $this->paymentService->getPaymentIntent($order->stripe_payment_intent_id);
+            if ($paymentIntent->status !== 'succeeded') {
+                throw new \Exception('Payment not completed for this order');
+            }
         }
 
         // Update product stock only after successful payment
@@ -137,10 +150,11 @@ class OrderService
         // Clear user's cart after successful payment confirmation
         $this->cartRepository->clearUserCart($order->user_id);
 
-        // Update order status to processing
+        // Update order status and payment status
         $this->orderRepository->updateOrderStatus($orderId, 'processing');
+        $this->orderRepository->updatePaymentStatus($orderId, 'succeeded');
 
-        return $order->fresh();
+        return $order->fresh(['items.product']);
     }
 
     public function updateOrderStatus($id, $status)
@@ -167,12 +181,12 @@ class OrderService
             throw new \Exception('Order not found');
         }
 
-        if ($order->isPaymentSucceeded()) {
+        if ($order->payment_status === 'succeeded') {
             throw new \Exception('Cannot cancel order with successful payment');
         }
 
         $this->orderRepository->updateOrderStatus($orderId, 'cancelled');
-        $order->update(['payment_status' => 'canceled']);
+        $this->orderRepository->updatePaymentStatus($orderId, 'canceled');
 
         return $order->fresh();
     }

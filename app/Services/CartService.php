@@ -5,18 +5,20 @@ namespace App\Services;
 use App\Repositories\CartRepository;
 use App\Repositories\ProductRepository;
 
-class CartService{
+class CartService
+{
     protected $cartRepository;
     protected $productRepository;
 
-     public function __construct(CartRepository $cartRepository, ProductRepository $productRepository)
+    public function __construct(CartRepository $cartRepository, ProductRepository $productRepository)
     {
         $this->cartRepository = $cartRepository;
         $this->productRepository = $productRepository;
     }
 
-    public function getUserCart($userId){
-       return $this->cartRepository->getUserCart($userId);
+    public function getUserCart($userId)
+    {
+        return $this->cartRepository->getUserCart($userId);
     }
 
     public function addToCart($userId, $productId, $quantity)
@@ -50,7 +52,8 @@ class CartService{
 
         return $this->cartRepository->addToCart($userId, $productId, $quantity);
     }
- public function updateCartItem($userId, $cartItemId, $quantity)
+
+    public function updateCartItem($userId, $cartItemId, $quantity)
     {
         $cartItem = $this->cartRepository->getUserCart($userId)
             ->firstWhere('id', $cartItemId);

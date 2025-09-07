@@ -1,5 +1,4 @@
 <?php
-// app/Repositories/CartRepository.php
 namespace App\Repositories;
 
 use App\Models\Cart;
@@ -28,11 +27,19 @@ class CartRepository
 
     public function addToCart($userId, $productId, $quantity): Cart
     {
+        // Check if item already exists first
+        $existingItem = $this->findCartItem($userId, $productId);
+        
+        if ($existingItem) {
+            $this->updateCartItem($existingItem->id, $existingItem->quantity + $quantity);
+            return $existingItem->fresh();
+        }
+
         return $this->model->create([
             'user_id' => $userId,
             'product_id' => $productId,
             'quantity' => $quantity
-        ]);
+        ])->load('product');
     }
 
     public function updateCartItem($cartItemId, $quantity): bool

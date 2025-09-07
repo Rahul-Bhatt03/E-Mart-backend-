@@ -21,8 +21,8 @@ class PaymentService
     {
         try {
             $paymentIntent = PaymentIntent::create([
-                'amount' => $this->convertToStripeAmount($order->final_amount),
-                'currency' => 'usd', // Change to your preferred currency
+                'amount' => $this->convertToStripeAmount($order->total_amount),
+                'currency' => 'usd',
                 'payment_method_types' => ['card'],
                 'metadata' => [
                     'order_id' => $order->id,
@@ -31,12 +31,6 @@ class PaymentService
                 ],
                 'description' => "Payment for Order #{$order->order_number}",
                 'receipt_email' => $order->user->email ?? null,
-            ]);
-
-            // Update order with payment intent ID
-            $order->update([
-                'stripe_payment_intent_id' => $paymentIntent->id,
-                'payment_status' => 'processing'
             ]);
 
             return $paymentIntent;
@@ -112,11 +106,11 @@ class PaymentService
             $order->update([
                 'payment_status' => 'succeeded',
                 'status' => 'processing',
-                'payment_metadata' => [
+                'payment_metadata' => json_encode([
                     'payment_method' => $paymentIntent['payment_method'],
                     'amount_received' => $paymentIntent['amount_received'],
                     'charges' => $paymentIntent['charges']['data'] ?? []
-                ]
+                ])
             ]);
         }
     }
@@ -132,9 +126,9 @@ class PaymentService
             $order->update([
                 'payment_status' => 'failed',
                 'status' => 'cancelled',
-                'payment_metadata' => [
+                'payment_metadata' => json_encode([
                     'failure_reason' => $paymentIntent['last_payment_error']['message'] ?? 'Payment failed'
-                ]
+                ])
             ]);
         }
     }
@@ -159,7 +153,7 @@ class PaymentService
      */
     private function convertToStripeAmount($amount)
     {
-        return (int) ($amount * 100); // Convert to cents
+        return (int) round($amount * 100); // Convert to cents
     }
 
     /**
