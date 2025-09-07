@@ -28,7 +28,9 @@ class Order extends Model
         'tax_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',
         'shipping_address' => 'array',
-        'payment_metadata' => 'array'
+        'payment_metadata' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected function shippingAddress(): Attribute
@@ -75,5 +77,54 @@ class Order extends Model
     public function isPaymentSucceeded()
     {
         return $this->payment_status === 'succeeded';
+    }
+    
+    // Scopes
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeByPaymentStatus($query, $paymentStatus)
+    {
+        return $query->where('payment_status', $paymentStatus);
+    }
+
+    public function scopeByUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    // Accessors
+    public function getFormattedTotalAttribute()
+    {
+        return number_format($this->total_amount, 2);
+    }
+
+    public function getFormattedTaxAttribute()
+    {
+        return number_format($this->tax_amount, 2);
+    }
+
+    public function getFormattedShippingAttribute()
+    {
+        return number_format($this->shipping_amount, 2);
+    }
+
+    // Methods
+    public function canBeCancelled()
+    {
+        return in_array($this->status, ['pending', 'processing']) && 
+               in_array($this->payment_status, ['pending', 'processing']);
+    }
+
+    public function isPaid()
+    {
+        return $this->payment_status === 'succeeded';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'delivered';
     }
 }
