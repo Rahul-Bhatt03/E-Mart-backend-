@@ -35,4 +35,9 @@ return [
         'api_key' => env('CLOUDINARY_API_KEY'),
         'api_secret' => env('CLOUDINARY_API_SECRET'),
     ],
+    'stripe' => [
+    'public' => env('STRIPE_PUBLIC_KEY'),
+    'secret' => env('STRIPE_SECRET_KEY'),
+    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+],
 ];

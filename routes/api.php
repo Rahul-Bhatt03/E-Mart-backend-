@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LogoutController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -17,4 +22,68 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/refresh-token', [LoginController::class, 'refreshToken']);
+});
+
+// public product routes 
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
+
+// protected routes 
+Route::middleware('auth:sanctum')->group(function () {
+
+    // cart routes 
+    Route::prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'index']);
+        Route::post('/', [CartController::class, 'store']);
+        Route::put('/{cartItemId}', [CartController::class, 'update']);
+        Route::delete('/{cartItemId}', [CartController::class, 'destroy']);
+        Route::delete('/', [CartController::class, 'clear']);
+    });
+
+    // user order routes 
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'userOrders']);
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/{id}', [OrderController::class, 'userShow']);
+    });
+
+    // admin routes 
+    Route::prefix('admin')->group(function () {
+
+        // product management 
+        Route::get('/products', [ProductController::class, 'adminIndex']);
+        Route::get('/products/{id}', [ProductController::class, 'adminShow']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+        Route::delete('/products/{productId}/images/{imagePublicId}', [ProductController::class, 'deleteImage']);
+
+        // Order management
+        Route::get('/orders', [OrderController::class, 'adminIndex']);
+        Route::get('/orders/{id}', [OrderController::class, 'adminShow']);
+        Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/payment/create-intent', [PaymentController::class, 'createPaymentIntent']);
+        Route::get('/payment/status/{paymentIntentId}', [PaymentController::class, 'getPaymentStatus']);
+        Route::post('/payment/confirm-order', [PaymentController::class, 'confirmOrder']);
+        Route::get('/payment/public-key', [PaymentController::class, 'getPublicKey']);
+    });
+    Route::post('/webhook/stripe', [PaymentController::class, 'webhook']);
+
+    // Image upload routes (consider adding middleware for authentication)
+    Route::prefix('images')->group(function () {
+        Route::post('/upload', [ImageUploadController::class, 'uploadSingle']);
+        Route::post('/upload-multiple', [ImageUploadController::class, 'uploadMultiple']);
+        Route::delete('/delete', [ImageUploadController::class, 'deleteImage']);
+        Route::delete('/delete-multiple', [ImageUploadController::class, 'deleteMultiple']);
+    });
+
+    // Admin routes (add your authentication middleware)
+    Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
+
+        Route::apiResource('products', ProductController::class)->except(['index', 'show']);
+        Route::delete('/products/{productId}/images/{imagePublicId}', [ProductController::class, 'deleteImage']);
+    });
 });
